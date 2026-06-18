@@ -1,8 +1,8 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
+import customtkinter as ctk
 import math
 import os
 import sys
+from tkinter import messagebox
 
 # Check for PIL (Pillow)
 try:
@@ -12,254 +12,273 @@ except ImportError:
     HAS_PIL = False
 
 def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
+    """Supports PyInstaller bundled resources"""
     try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
-class TrackonApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Trackon Rate Calculator")
-        self.root.geometry("400x580")
-        self.root.resizable(False, False)
-        self.root.configure(bg="#F5F7FA")
+# Configure CustomTkinter
+ctk.set_appearance_mode("Light")
+ctk.set_default_color_theme("blue")
+
+class TrackonApp(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+        self.title("Trackon Rate Calculator")
+        self.geometry("450x620")
+        self.resizable(False, False)
         
         self.colors = {
-            "bg": "#F5F7FA",
-            "card_bg": "#FFFFFF",
-            "primary": "#1A237E",
-            "text_dark": "#263238",
-            "text_light": "#90A4AE",
-            "prime_color": "#C2185B",
-            "std_color": "#2E7D32"
+            "prime": "#E91E63",
+            "standard": "#4CAF50",
+            "bg": "#F8F9FA",
+            "card": "#FFFFFF",
+            "text_primary": "#1A1A1A",
+            "text_secondary": "#6C757D"
         }
-
-        self.company = tk.StringVar(value="prime")
+        self.company = "prime"
         self.logo_img = None
-        self.create_widgets()
-
-    def create_widgets(self):
-        # --- 1. Header / Logo Area ---
-        header_frame = tk.Frame(self.root, bg=self.colors["card_bg"], height=130)
-        header_frame.pack(fill="x", pady=(0, 10))
-        header_frame.pack_propagate(False)
+        self.setup_ui()
         
-        logo_label = tk.Label(header_frame, bg=self.colors["card_bg"])
-        logo_label.pack(pady=(15, 0))
+    def setup_ui(self):
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        
+        bg_frame = ctk.CTkFrame(self, fg_color=self.colors["bg"], corner_radius=0)
+        bg_frame.grid(row=0, column=0, sticky="nsew")
+        
+        # Header Card
+        header_card = ctk.CTkFrame(bg_frame, fg_color=self.colors["card"], corner_radius=16)
+        header_card.pack(fill="x", padx=20, pady=(20, 15))
+        
+        logo_frame = ctk.CTkFrame(header_card, fg_color="transparent", height=100)
+        logo_frame.pack(fill="x")
+        logo_frame.pack_propagate(False)
         
         try:
             if HAS_PIL:
                 img_path = resource_path("trackon_logo.png")
                 if os.path.exists(img_path):
                     img = Image.open(img_path)
-                    width_percent = (280 / float(img.size[0]))
+                    width_percent = (200 / float(img.size[0]))
                     hsize = int((float(img.size[1]) * float(width_percent)))
-                    img = img.resize((280, hsize), Image.Resampling.LANCZOS)
-                    self.logo_img = ImageTk.PhotoImage(img)
-                    logo_label.config(image=self.logo_img)
-                else:
-                    raise FileNotFoundError
+                    img = img.resize((200, hsize), Image.Resampling.LANCZOS)
+                    self.logo_img = ctk.CTkImage(light_image=img, size=(200, hsize))
+                    logo_label = ctk.CTkLabel(logo_frame, image=self.logo_img, text="")
+                    logo_label.pack(pady=(10, 5))
+                else: raise FileNotFoundError
         except Exception:
-            logo_label.config(text="📦 TRACKON", font=("Segoe UI", 28, "bold"), 
-                              fg=self.colors["primary"], bg=self.colors["card_bg"])
+            ctk.CTkLabel(logo_frame, text="TRACKON", 
+                        font=ctk.CTkFont(size=28, weight="bold"), 
+                        text_color=self.colors["text_primary"]).pack(pady=(15, 0))
             
-        footer_text = tk.Label(header_frame, text="S W I F T . S A F E . S U R E", 
-                               font=("Segoe UI", 9, "bold"), bg=self.colors["card_bg"], 
-                               fg=self.colors["text_light"])
-        footer_text.pack(pady=(5, 0))
-
-        # --- 2. Main Card Container ---
-        main_frame = tk.Frame(self.root, bg=self.colors["bg"])
-        main_frame.pack(fill="both", expand=True, padx=15, pady=5)
-
-        card = tk.Frame(main_frame, bg=self.colors["card_bg"], relief="flat")
-        card.pack(fill="both", expand=True)
-
-        # 2.1 Company Toggle
-        lbl_company = tk.Label(card, text="Select Company", font=("Segoe UI", 10, "bold"), 
-                               bg=self.colors["card_bg"], fg="#546E7A", anchor="w")
-        lbl_company.pack(fill="x", padx=25, pady=(15, 5))
-
-        toggle_frame = tk.Frame(card, bg=self.colors["card_bg"])
-        toggle_frame.pack(fill="x", padx=25, pady=5)
-
-        self.btn_prime = tk.Radiobutton(toggle_frame, text="🔴 PRIME", variable=self.company, value="prime",
-                                        indicatoron=0, width=12, bg="#FCE4EC", fg="#880E4F",
-                                        selectcolor="#E91E63", activebackground="#F48FB1",
-                                        font=("Segoe UI", 10, "bold"), bd=0, relief="flat", cursor="hand2")
-        self.btn_prime.pack(side="left", padx=2)
-
-        self.btn_std = tk.Radiobutton(toggle_frame, text="🟢 STANDARD", variable=self.company, value="standard",
-                                      indicatoron=0, width=12, bg="#E8F5E9", fg="#1B5E20",
-                                      selectcolor="#00C853", activebackground="#A5D6A7",
-                                      font=("Segoe UI", 10, "bold"), bd=0, relief="flat", cursor="hand2")
-        self.btn_std.pack(side="right", padx=2)
+        ctk.CTkLabel(logo_frame, text="S W I F T  •  S A F E  •  S U R E", 
+                    font=ctk.CTkFont(size=11), 
+                    text_color=self.colors["text_secondary"]).pack(pady=(2, 10))
         
-        self.update_company_style()
-        self.company.trace('w', lambda *args: self.update_company_style())
-
-        # 2.2 Inputs
-        self.add_input_row(card, "Service Type")
-        self.service = ttk.Combobox(card, state="readonly", font=("Segoe UI", 11))
-        self.service['values'] = ('DOX', 'Surface (Non-DOX)', 'Smart Express')
-        self.service.current(0)
-        self.service.pack(fill="x", padx=25, pady=(2, 10))
+        # Content Card
+        content_card = ctk.CTkFrame(bg_frame, fg_color=self.colors["card"], corner_radius=16)
+        content_card.pack(fill="both", expand=True, padx=20, pady=(0, 20))
         
-        self.add_input_row(card, "Destination Zone")
-        self.zone = ttk.Combobox(card, state="readonly", font=("Segoe UI", 11))
-        self.zone['values'] = ('MP', 'ROI', 'NE')
-        self.zone.current(0)
-        self.zone.pack(fill="x", padx=25, pady=(2, 10))
-
-        self.add_input_row(card, "Weight (Kg)")
-        self.entry_wt = tk.Entry(card, font=("Segoe UI", 14, "bold"), justify="center", 
-                                 bg="#F5F7FA", relief="flat", bd=1)
-        self.entry_wt.pack(fill="x", padx=25, pady=(2, 10))
-        self.entry_wt.bind("<Return>", lambda e: self.calculate())
-
-        # 2.3 Calculate Button
-        calc_btn = tk.Button(card, text="💰 CALCULATE RATE", command=self.calculate,
-                             bg=self.colors["primary"], fg="white", font=("Segoe UI", 13, "bold"),
-                             activebackground="#0D47A1", relief="flat", cursor="hand2", height=2)
-        calc_btn.pack(fill="x", padx=25, pady=10)
-
-        # 2.4 Result Display
-        res_frame = tk.Frame(card, bg="#ECEFF1", relief="flat")
-        res_frame.pack(fill="x", padx=25, pady=15)
+        # Company Selection
+        ctk.CTkLabel(content_card, text="Select Service", 
+                    font=ctk.CTkFont(size=14, weight="bold"), 
+                    text_color=self.colors["text_primary"], 
+                    anchor="w").pack(fill="x", padx=25, pady=(20, 8))
         
-        self.lbl_result_label = tk.Label(res_frame, text="TOTAL AMOUNT", 
-                                         font=("Segoe UI", 8, "bold"), bg="#ECEFF1", fg="#546E7A")
-        self.lbl_result_label.pack(pady=(8, 0))
+        company_frame = ctk.CTkFrame(content_card, fg_color="transparent")
+        company_frame.pack(fill="x", padx=25, pady=(0, 15))
+        company_frame.grid_columnconfigure(0, weight=1)
+        company_frame.grid_columnconfigure(1, weight=1)
         
-        self.lbl_amt = tk.Label(res_frame, text="₹0", font=("Segoe UI", 38, "bold"), 
-                                bg="#ECEFF1", fg=self.colors["primary"])
-        self.lbl_amt.pack()
+        self.btn_prime = ctk.CTkButton(company_frame, text="🔴 PRIME", 
+                                      command=lambda: self.select_company("prime"),
+                                      fg_color="#FCE4EC", text_color="#880E4F",
+                                      hover_color="#F8BBD0", corner_radius=10, height=45,
+                                      font=ctk.CTkFont(size=13, weight="bold"))
+        self.btn_prime.grid(row=0, column=0, padx=(0, 8), sticky="ew")
         
-        self.lbl_detail = tk.Label(res_frame, text="Select options & enter weight", 
-                                   font=("Segoe UI", 9), bg="#ECEFF1", fg="#78909C")
-        self.lbl_detail.pack(pady=(0, 8))
-
-        # Footer
-        footer = tk.Label(self.root, text="© 2026 Trackon Courier System", 
-                          font=("Segoe UI", 8), bg=self.colors["bg"], fg="#B0BEC5")
-        footer.pack(pady=5)
-
-    def add_input_row(self, parent, text):
-        lbl = tk.Label(parent, text=text, font=("Segoe UI", 10, "bold"), 
-                       bg=parent.cget("bg"), fg="#546E7A", anchor="w")
-        lbl.pack(fill="x", padx=25, pady=(10, 0))
-
-    def update_company_style(self):
-        if self.company.get() == 'prime':
-            self.colors["primary"] = self.colors["prime_color"]
-            self.btn_prime.config(bg="#F48FB1")
-            self.btn_std.config(bg="#E0E0E0")
+        self.btn_standard = ctk.CTkButton(company_frame, text="🟢 STANDARD", 
+                                         command=lambda: self.select_company("standard"),
+                                         fg_color="#E8F5E9", text_color="#1B5E20",
+                                         hover_color="#C8E6C9", corner_radius=10, height=45,
+                                         font=ctk.CTkFont(size=13, weight="bold"))
+        self.btn_standard.grid(row=0, column=1, padx=(8, 0), sticky="ew")
+        self.update_company_buttons()
+        
+        # Service Dropdown
+        ctk.CTkLabel(content_card, text="Service Type", 
+                    font=ctk.CTkFont(size=14, weight="bold"), 
+                    text_color=self.colors["text_primary"], 
+                    anchor="w").pack(fill="x", padx=25, pady=(10, 8))
+        
+        self.service_var = ctk.StringVar(value="DOX")
+        service_menu = ctk.CTkOptionMenu(content_card, variable=self.service_var,
+                                        values=["DOX", "Surface (Non-DOX)", "Smart Express"],
+                                        fg_color="#F1F3F4", button_color="#E8EAED",
+                                        button_hover_color="#DEE2E6", corner_radius=10,
+                                        height=45, font=ctk.CTkFont(size=13))
+        service_menu.pack(fill="x", padx=25, pady=(0, 15))
+        
+        # Zone Dropdown
+        ctk.CTkLabel(content_card, text="Zone", 
+                    font=ctk.CTkFont(size=14, weight="bold"), 
+                    text_color=self.colors["text_primary"], 
+                    anchor="w").pack(fill="x", padx=25, pady=(10, 8))
+        
+        self.zone_var = ctk.StringVar(value="MP")
+        zone_menu = ctk.CTkOptionMenu(content_card, variable=self.zone_var,
+                                     values=["MP", "ROI", "NE"],
+                                     fg_color="#F1F3F4", button_color="#E8EAED",
+                                     button_hover_color="#DEE2E6", corner_radius=10,
+                                     height=45, font=ctk.CTkFont(size=13))
+        zone_menu.pack(fill="x", padx=25, pady=(0, 15))
+        
+        # Weight Input
+        ctk.CTkLabel(content_card, text="Weight (Kg)", 
+                    font=ctk.CTkFont(size=14, weight="bold"), 
+                    text_color=self.colors["text_primary"], 
+                    anchor="w").pack(fill="x", padx=25, pady=(10, 8))
+        
+        self.weight_entry = ctk.CTkEntry(content_card, placeholder_text="Enter weight (e.g., 2.5)",
+                                        fg_color="#F1F3F4", corner_radius=10, height=45,
+                                        font=ctk.CTkFont(size=14))
+        self.weight_entry.pack(fill="x", padx=25, pady=(0, 15))
+        self.weight_entry.bind("<Return>", lambda e: self.calculate())
+        
+        # Calculate Button
+        self.calc_btn = ctk.CTkButton(content_card, text="CALCULATE RATE 💰",
+                                     command=self.calculate, corner_radius=10, height=50,
+                                     font=ctk.CTkFont(size=15, weight="bold"))
+        self.calc_btn.pack(fill="x", padx=25, pady=(10, 20))
+        self.update_calc_button()
+        
+        # Result Card
+        self.result_card = ctk.CTkFrame(content_card, fg_color="#F8F9FA", corner_radius=12)
+        self.result_card.pack(fill="x", padx=25, pady=(0, 20))
+        
+        ctk.CTkLabel(self.result_card, text="TOTAL AMOUNT", 
+                    font=ctk.CTkFont(size=11), 
+                    text_color=self.colors["text_secondary"]).pack(pady=(12, 0))
+        
+        self.amount_label = ctk.CTkLabel(self.result_card, text="₹0", 
+                                        font=ctk.CTkFont(size=42, weight="bold"),
+                                        text_color=self.colors["prime"])
+        self.amount_label.pack()
+        
+        self.detail_label = ctk.CTkLabel(self.result_card, text="Select options & enter weight", 
+                                        font=ctk.CTkFont(size=12),
+                                        text_color=self.colors["text_secondary"])
+        self.detail_label.pack(pady=(0, 12))
+        
+    def select_company(self, company):
+        self.company = company
+        self.update_company_buttons()
+        self.update_calc_button()
+        self.amount_label.configure(text_color=self.colors[company])
+        
+    def update_company_buttons(self):
+        if self.company == "prime":
+            self.btn_prime.configure(fg_color=self.colors["prime"], text_color="white", hover_color="#C2185B")
+            self.btn_standard.configure(fg_color="#E8F5E9", text_color="#1B5E20", hover_color="#C8E6C9")
         else:
-            self.colors["primary"] = self.colors["std_color"]
-            self.btn_std.config(bg="#A5D6A7")
-            self.btn_prime.config(bg="#E0E0E0")
-
+            self.btn_standard.configure(fg_color=self.colors["standard"], text_color="white", hover_color="#388E3C")
+            self.btn_prime.configure(fg_color="#FCE4EC", text_color="#880E4F", hover_color="#F8BBD0")
+            
+    def update_calc_button(self):
+        if self.company == "prime":
+            self.calc_btn.configure(fg_color=self.colors["prime"], hover_color="#AD1457")
+        else:
+            self.calc_btn.configure(fg_color=self.colors["standard"], hover_color="#2E7D32")
+        
     def calculate(self):
         try:
-            w_raw = self.entry_wt.get().strip()
-            if not w_raw: return
-            w = float(w_raw)
-            if w <= 0: raise ValueError
+            weight_text = self.weight_entry.get().strip()
+            if not weight_text:
+                self.show_error("Please enter weight")
+                return
+            w = float(weight_text)
+            if w <= 0:
+                self.show_error("Weight must be greater than 0")
+                return
         except ValueError:
-            messagebox.showwarning("Input Error", "Please enter a valid weight!")
+            self.show_error("Please enter a valid number")
             return
-
-        comp = self.company.get()
-        zone_val = self.zone.get().lower()
-        zone = 'mp' if zone_val.startswith('mp') else ('roi' if zone_val.startswith('roi') else 'ne')
+            
+        zone = self.zone_var.get().lower()
+        service = self.service_var.get()
         
-        svc_val = self.service.get()
-        if 'DOX' in svc_val: svc = 'dox'
-        elif 'Surface' in svc_val: svc = 'surface'
-        else: svc = 'smart'
-
-        amt = 0
-        detail = ""
-        color = self.colors["primary"]
-
+        if "DOX" in service: svc = "dox"
+        elif "Surface" in service: svc = "surface"
+        else: svc = "smart"
+            
         try:
-            # ==========================
-            # PRIME LOGIC
-            # ==========================
-            if comp == 'prime':
-                if svc == 'dox':
-                    rates = {'mp': 250, 'roi': 300, 'ne': 350}
+            if self.company == "prime":
+                if svc == "dox":
+                    rates = {"mp": 250, "roi": 300, "ne": 350}
                     slabs = math.ceil(w / 0.5)
-                    amt = slabs * rates[zone]
+                    amount = slabs * rates[zone]
                     detail = f"DOX: {slabs} slab(s) × ₹{rates[zone]}"
-                    color = self.colors["prime_color"]
-                
-                elif svc in ['surface', 'smart']:
-                    messagebox.showinfo("Info", "Prime sirf DOX service ke liye available hai.")
-                    return
-
-            # ==========================
-            # STANDARD LOGIC
-            # ==========================
-            else:
-                color = self.colors["std_color"]
-                if svc == 'dox':
-                    base_rates = {'mp': 100, 'roi': 260, 'ne': 450}
-                    if w <= 1:
-                        amt = base_rates[zone]
-                        detail = f"DOX: Flat Rate (0-1kg)"
-                    else:
-                        extra_wt = w - 1
-                        extra_slabs = math.ceil(extra_wt / 0.5)
-                        addl_rates = {'mp': 80, 'roi': 200, 'ne': 350} 
-                        amt = base_rates[zone] + (extra_slabs * addl_rates[zone])
-                        detail = f"DOX: 1kg Flat + {extra_slabs} addl slab(s)"
+                    self.show_result(amount, detail, self.colors["prime"])
+                else:
+                    self.show_error("Prime only supports DOX service")
                     
-                elif svc == 'surface':
+            else:
+                if svc == "dox":
+                    base_rates = {"mp": 100, "roi": 260, "ne": 450}
+                    if w <= 1:
+                        amount = base_rates[zone]
+                        detail = "DOX: Flat Rate (0-1kg)"
+                    else:
+                        extra_slabs = math.ceil((w - 1) / 0.5)
+                        addl_rates = {"mp": 80, "roi": 200, "ne": 350}
+                        amount = base_rates[zone] + (extra_slabs * addl_rates[zone])
+                        detail = f"DOX: 1kg + {extra_slabs} addl slab(s)"
+                    self.show_result(amount, detail, self.colors["standard"])
+                    
+                elif svc == "surface":
                     cw = math.ceil(w)
                     rate = 0
                     slab_info = ""
-                    
-                    if zone == 'mp':
+                    if zone == "mp":
                         if cw <= 5: rate, slab_info = 100, "0-5kg"
                         elif cw <= 10: rate, slab_info = 85, "5-10kg"
-                        else: raise ValueError("Weight > 10kg not supported")
-                        
-                    elif zone == 'roi':
+                        else: raise ValueError("Weight > 10kg")
+                    elif zone == "roi":
                         if cw <= 3: rate, slab_info = 150, "0-3kg"
                         elif cw <= 7: rate, slab_info = 100, "3-7kg"
                         elif cw <= 10: rate, slab_info = 90, "7-10kg"
-                        else: raise ValueError("Weight > 10kg not supported")
-                        
-                    elif zone == 'ne':
+                        else: raise ValueError("Weight > 10kg")
+                    elif zone == "ne":
                         if cw <= 3: rate, slab_info = 185, "0-3kg"
                         elif cw <= 7: rate, slab_info = 125, "3-7kg"
                         elif cw <= 10: rate, slab_info = 115, "7-10kg"
-                        else: raise ValueError("Weight > 10kg not supported")
-
-                    amt = rate * cw
+                        else: raise ValueError("Weight > 10kg")
+                    amount = rate * cw
                     detail = f"Surface: ₹{rate}/kg ({slab_info}) × {cw}kg"
-
-                elif svc == 'smart':
+                    self.show_result(amount, detail, self.colors["standard"])
+                    
+                elif svc == "smart":
                     cw = math.ceil(w)
-                    rates = {'mp': 81, 'roi': 104, 'ne': 126}
-                    amt = rates[zone] * cw
+                    rates = {"mp": 81, "roi": 104, "ne": 126}
+                    amount = rates[zone] * cw
                     detail = f"Smart: ₹{rates[zone]}/kg × {cw}kg"
-
-            self.update_result(amt, detail, color)
-
+                    self.show_result(amount, detail, self.colors["standard"])
         except ValueError as e:
-            messagebox.showwarning("Limit", str(e))
-
-    def update_result(self, amount, detail_text, color):
-        self.lbl_amt.config(text=f"₹{amount}", fg=color)
-        self.lbl_detail.config(text=detail_text)
+            self.show_error(str(e))
+            
+    def show_result(self, amount, detail, color):
+        self.amount_label.configure(text=f"₹{amount}", text_color=color)
+        self.detail_label.configure(text=detail)
+        self.result_card.configure(fg_color="#E8F5E9" if self.company == "standard" else "#FCE4EC")
+        
+    def show_error(self, message):
+        self.amount_label.configure(text="⚠️", text_color="#F44336")
+        self.detail_label.configure(text=message)
+        self.result_card.configure(fg_color="#FFEBEE")
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = TrackonApp(root)
-    root.mainloop()
+    app = TrackonApp()
+    app.mainloop()
