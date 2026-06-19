@@ -23,33 +23,34 @@ jobs:
           python -m pip install --upgrade pip
           pip install customtkinter Pillow pyinstaller
 
-      - name: Check Logo File
+      - name: Generate Perfect Icon
         run: |
-          if (Test-Path "trackon_logo.png") {
-            echo "Logo file found."
-          } else {
-            echo "Error: Logo file not found!"
-            exit 1
-          }
-
-      - name: Convert Logo to ICO
-        run: |
-          # Convert PNG to ICO using Python script inline
-          python -c "from PIL import Image; img = Image.open('trackon_logo.png'); img.save('trackon_logo.ico', format='ICO')"
-
-      - name: Verify ICO File
-        run: |
-          if (Test-Path "trackon_logo.ico") {
-            echo "ICO file created successfully."
-          } else {
-            echo "Error: Failed to create ICO file."
-            exit 1
-          }
+          # Logic: Agar icon_source.png hai toh wo use karo, nahi toh logo crop karo
+          python -c "
+          from PIL import Image
+          import os
+          try:
+              if os.path.exists('icon_source.png'):
+                  print('Found square icon_source.png! Using it.')
+                  img = Image.open('icon_source.png')
+                  img.save('icon.ico')
+              else:
+                  print('No square icon found. Cropping main logo center...')
+                  img = Image.open('trackon_logo.png')
+                  w, h = img.size
+                  side = min(w, h)
+                  left = (w - side) // 2
+                  top = (h - side) // 2
+                  icon_img = img.crop((left, top, left + side, top + side))
+                  icon_img = icon_img.resize((256, 256), Image.Resampling.LANCZOS)
+                  icon_img.save('icon.ico')
+          except Exception as e:
+              print(f'Error: {e}')
+          "
 
       - name: Build EXE with PyInstaller
         run: |
-          # Use the generated ICO file for the application icon
-          pyinstaller --onefile --windowed --icon="trackon_logo.ico" --add-data "trackon_logo.png;." --name "Trackon_Calculator" trackon_calc_pro.py
+          pyinstaller --onefile --windowed --icon="icon.ico" --add-data "trackon_logo.png;." --name "Trackon_Calculator" trackon_calc_pro.py
 
       - name: Upload EXE Artifact
         uses: actions/upload-artifact@v4
