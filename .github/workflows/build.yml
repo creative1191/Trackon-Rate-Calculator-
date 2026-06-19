@@ -23,9 +23,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install customtkinter Pillow pyinstaller
 
+      - name: Convert Logo to ICO
+        run: |
+          # Ye command trackon_logo.png ko .ico format mein convert karegi
+          python -c "from PIL import Image; img = Image.open('trackon_logo.png'); img.save('trackon_logo.ico')"
+
       - name: Build EXE with PyInstaller
         run: |
-          pyinstaller --onefile --windowed --name "Trackon_Calculator" --add-data "trackon_logo.png;." trackon_calc_pro.py
+          # --icon=trackon_logo.ico se app ka icon change ho jayega
+          pyinstaller --onefile --windowed --icon=trackon_logo.ico --name "Trackon_Calculator" --add-data "trackon_logo.png;." trackon_calc_pro.py
 
       - name: Upload EXE Artifact
         uses: actions/upload-artifact@v4
