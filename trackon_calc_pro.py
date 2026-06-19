@@ -16,7 +16,6 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
-# Theme Setup
 ctk.set_appearance_mode("Light")
 ctk.set_default_color_theme("blue")
 
@@ -24,9 +23,20 @@ class TrackonApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Trackon Rate Calculator")
-        # ✅ FIX: Size chhota kiya hai taaki screen par fit ho jaye
-        self.geometry("450x680") 
+        # ✅ Window size fixed to fit content without scroll
+        self.geometry("480x650") 
         self.resizable(False, False)
+        
+        # ✅ App Icon Fix: Set window icon immediately
+        try:
+            icon_path = resource_path("icon.ico")
+            if os.path.exists(icon_path):
+                self.iconbitmap(icon_path)
+            else:
+                # Fallback for development
+                self.iconbitmap("icon.ico") 
+        except Exception:
+            pass
         
         self.colors = {
             "prime": "#E91E63",
@@ -43,20 +53,16 @@ class TrackonApp(ctk.CTk):
         self.setup_ui()
         
     def setup_ui(self):
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)
+        # Main Frame (No Scroll)
+        main_frame = ctk.CTkFrame(self, fg_color=self.colors["bg"])
+        main_frame.pack(fill="both", expand=True, padx=0, pady=0)
+        main_frame.grid_columnconfigure(0, weight=1)
         
-        # Scrollable Frame
-        main_scroll = ctk.CTkScrollableFrame(self, fg_color=self.colors["bg"], scrollbar_button_color="#D1D5DB")
-        main_scroll.grid(row=0, column=0, sticky="nsew")
-        main_scroll.grid_columnconfigure(0, weight=1)
+        # Header
+        header_card = ctk.CTkFrame(main_frame, fg_color=self.colors["card"], corner_radius=0, border_width=0)
+        header_card.grid(row=0, column=0, sticky="ew")
         
-        # --- HEADER ---
-        # Header ka height thoda reduce kiya
-        header_card = ctk.CTkFrame(main_scroll, fg_color=self.colors["card"], corner_radius=16, border_width=0)
-        header_card.grid(row=0, column=0, sticky="ew", padx=15, pady=(15, 10))
-        
-        logo_frame = ctk.CTkFrame(header_card, fg_color="transparent", height=90)
+        logo_frame = ctk.CTkFrame(header_card, fg_color="transparent", height=100)
         logo_frame.pack(fill="x")
         logo_frame.pack_propagate(False)
         
@@ -65,20 +71,24 @@ class TrackonApp(ctk.CTk):
                 img_path = resource_path("trackon_logo.png")
                 if os.path.exists(img_path):
                     img = Image.open(img_path)
-                    img = img.resize((200, int(200 * img.size[1] / img.size[0])), Image.Resampling.LANCZOS)
-                    self.logo_img = ctk.CTkImage(light_image=img, size=(200, int(200 * img.size[1] / img.size[0])))
+                    # Resize logic for clear logo
+                    width_percent = (220 / float(img.size[0]))
+                    hsize = int((float(img.size[1]) * float(width_percent)))
+                    img = img.resize((220, hsize), Image.Resampling.LANCZOS)
+                    self.logo_img = ctk.CTkImage(light_image=img, size=(220, hsize))
                     logo_label = ctk.CTkLabel(logo_frame, image=self.logo_img, text="")
-                    logo_label.pack(pady=(5, 0))
+                    logo_label.pack(pady=(10, 0))
                 else: raise FileNotFoundError
         except Exception:
-            ctk.CTkLabel(logo_frame, text="TRACKON", font=ctk.CTkFont(size=24, weight="bold"), text_color=self.colors["text_main"]).pack(pady=(10, 0))
+            ctk.CTkLabel(logo_frame, text="TRACKON", font=ctk.CTkFont(size=26, weight="bold"), text_color=self.colors["text_main"]).pack(pady=(15, 0))
             
-        ctk.CTkLabel(logo_frame, text="S W I F T  •  S A F E  •  S U R E", font=ctk.CTkFont(size=10), text_color=self.colors["text_sub"]).pack(pady=(0, 5))
+        ctk.CTkLabel(logo_frame, text="S W I F T  •  S A F E  •  S U R E", font=ctk.CTkFont(size=9), text_color=self.colors["text_sub"]).pack(pady=(2, 5))
         
-        # --- MAIN FORM CARD ---
-        content_card = ctk.CTkFrame(main_scroll, fg_color=self.colors["card"], corner_radius=16, border_width=0)
-        content_card.grid(row=1, column=0, sticky="ew", padx=15, pady=(0, 15))
+        # Content Card
+        content_card = ctk.CTkFrame(main_frame, fg_color=self.colors["card"], corner_radius=0, border_width=0)
+        content_card.grid(row=1, column=0, sticky="ew")
         
+        # Service Selection
         self.add_section_title(content_card, "Select Service")
         
         company_frame = ctk.CTkFrame(content_card, fg_color="transparent")
@@ -97,6 +107,7 @@ class TrackonApp(ctk.CTk):
         self.btn_standard.grid(row=0, column=1, padx=(8, 0), sticky="ew")
         self.update_company_buttons()
         
+        # Details
         self.add_section_title(content_card, "Shipment Details")
         
         # Service Type
@@ -111,24 +122,24 @@ class TrackonApp(ctk.CTk):
         self.weight_entry = self.create_input_row(content_card, "Weight (Kg)", is_entry=True, placeholder="Enter weight")
         self.weight_entry.bind("<Return>", lambda e: self.calculate())
         
-        # Button (Height thoda kam kiya)
+        # Button
         self.calc_btn = ctk.CTkButton(content_card, text="CALCULATE RATE 💰",
                                      command=self.calculate, corner_radius=10, height=45,
                                      font=ctk.CTkFont(size=14, weight="bold"))
         self.calc_btn.pack(fill="x", padx=20, pady=(5, 15))
         self.update_calc_button()
         
-        # Result (Compact Size)
+        # Result (Compact)
         self.result_card = ctk.CTkFrame(content_card, fg_color="#F9FAFB", corner_radius=12, border_width=1, border_color=self.colors["input_border"])
         self.result_card.pack(fill="x", padx=20, pady=(0, 15))
         
-        ctk.CTkLabel(self.result_card, text="TOTAL AMOUNT", font=ctk.CTkFont(size=11, weight="bold"), text_color=self.colors["text_sub"]).pack(pady=(10, 0))
+        ctk.CTkLabel(self.result_card, text="TOTAL AMOUNT", font=ctk.CTkFont(size=11, weight="bold"), text_color=self.colors["text_sub"]).pack(pady=(8, 0))
         
-        self.amount_label = ctk.CTkLabel(self.result_card, text="₹0", font=ctk.CTkFont(size=36, weight="bold"), text_color=self.colors["prime"])
+        self.amount_label = ctk.CTkLabel(self.result_card, text="₹0", font=ctk.CTkFont(size=32, weight="bold"), text_color=self.colors["prime"])
         self.amount_label.pack(pady=(2, 2))
         
-        self.detail_label = ctk.CTkLabel(self.result_card, text="Select options & enter weight", font=ctk.CTkFont(size=12), text_color=self.colors["text_sub"])
-        self.detail_label.pack(pady=(0, 10))
+        self.detail_label = ctk.CTkLabel(self.result_card, text="Select options & enter weight", font=ctk.CTkFont(size=11), text_color=self.colors["text_sub"])
+        self.detail_label.pack(pady=(0, 8))
         
     def add_section_title(self, parent, text):
         ctk.CTkLabel(parent, text=text, font=ctk.CTkFont(size=14, weight="bold"), 
