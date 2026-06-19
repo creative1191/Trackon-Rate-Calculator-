@@ -2,24 +2,20 @@ import customtkinter as ctk
 import math
 import os
 import sys
-from tkinter import messagebox
 
-# Check for PIL (Pillow)
 try:
-    from PIL import Image, ImageTk
+    from PIL import Image
     HAS_PIL = True
 except ImportError:
     HAS_PIL = False
 
 def resource_path(relative_path):
-    """Supports PyInstaller bundled resources"""
     try:
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
-# Configure CustomTkinter
 ctk.set_appearance_mode("Light")
 ctk.set_default_color_theme("blue")
 
@@ -27,7 +23,7 @@ class TrackonApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Trackon Rate Calculator")
-        self.geometry("450x620")
+        self.geometry("450x750") # Height badha diya
         self.resizable(False, False)
         
         self.colors = {
@@ -46,12 +42,14 @@ class TrackonApp(ctk.CTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         
-        bg_frame = ctk.CTkFrame(self, fg_color=self.colors["bg"], corner_radius=0)
-        bg_frame.grid(row=0, column=0, sticky="nsew")
+        # Scrollable Frame (Taaki agar screen choti ho to scroll ho jaye)
+        main_scroll = ctk.CTkScrollableFrame(self, fg_color=self.colors["bg"])
+        main_scroll.grid(row=0, column=0, sticky="nsew")
+        main_scroll.grid_columnconfigure(0, weight=1)
         
         # Header Card
-        header_card = ctk.CTkFrame(bg_frame, fg_color=self.colors["card"], corner_radius=16)
-        header_card.pack(fill="x", padx=20, pady=(20, 15))
+        header_card = ctk.CTkFrame(main_scroll, fg_color=self.colors["card"], corner_radius=16)
+        header_card.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 15))
         
         logo_frame = ctk.CTkFrame(header_card, fg_color="transparent", height=100)
         logo_frame.pack(fill="x")
@@ -79,8 +77,8 @@ class TrackonApp(ctk.CTk):
                     text_color=self.colors["text_secondary"]).pack(pady=(2, 10))
         
         # Content Card
-        content_card = ctk.CTkFrame(bg_frame, fg_color=self.colors["card"], corner_radius=16)
-        content_card.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+        content_card = ctk.CTkFrame(main_scroll, fg_color=self.colors["card"], corner_radius=16)
+        content_card.grid(row=1, column=0, sticky="ew", padx=20, pady=(0, 20))
         
         # Company Selection
         ctk.CTkLabel(content_card, text="Select Service", 
@@ -112,38 +110,38 @@ class TrackonApp(ctk.CTk):
         ctk.CTkLabel(content_card, text="Service Type", 
                     font=ctk.CTkFont(size=14, weight="bold"), 
                     text_color=self.colors["text_primary"], 
-                    anchor="w").pack(fill="x", padx=25, pady=(10, 8))
+                    anchor="w").pack(fill="x", padx=25, pady=(10, 5))
         
         self.service_var = ctk.StringVar(value="DOX")
         service_menu = ctk.CTkOptionMenu(content_card, variable=self.service_var,
                                         values=["DOX", "Surface (Non-DOX)", "Smart Express"],
                                         fg_color="#F1F3F4", button_color="#E8EAED",
                                         button_hover_color="#DEE2E6", corner_radius=10,
-                                        height=45, font=ctk.CTkFont(size=13))
-        service_menu.pack(fill="x", padx=25, pady=(0, 15))
+                                        height=42, font=ctk.CTkFont(size=13))
+        service_menu.pack(fill="x", padx=25, pady=(0, 10))
         
         # Zone Dropdown
         ctk.CTkLabel(content_card, text="Zone", 
                     font=ctk.CTkFont(size=14, weight="bold"), 
                     text_color=self.colors["text_primary"], 
-                    anchor="w").pack(fill="x", padx=25, pady=(10, 8))
+                    anchor="w").pack(fill="x", padx=25, pady=(10, 5))
         
         self.zone_var = ctk.StringVar(value="MP")
         zone_menu = ctk.CTkOptionMenu(content_card, variable=self.zone_var,
                                      values=["MP", "ROI", "NE"],
                                      fg_color="#F1F3F4", button_color="#E8EAED",
                                      button_hover_color="#DEE2E6", corner_radius=10,
-                                     height=45, font=ctk.CTkFont(size=13))
-        zone_menu.pack(fill="x", padx=25, pady=(0, 15))
+                                     height=42, font=ctk.CTkFont(size=13))
+        zone_menu.pack(fill="x", padx=25, pady=(0, 10))
         
         # Weight Input
         ctk.CTkLabel(content_card, text="Weight (Kg)", 
                     font=ctk.CTkFont(size=14, weight="bold"), 
                     text_color=self.colors["text_primary"], 
-                    anchor="w").pack(fill="x", padx=25, pady=(10, 8))
+                    anchor="w").pack(fill="x", padx=25, pady=(10, 5))
         
         self.weight_entry = ctk.CTkEntry(content_card, placeholder_text="Enter weight (e.g., 2.5)",
-                                        fg_color="#F1F3F4", corner_radius=10, height=45,
+                                        fg_color="#F1F3F4", corner_radius=10, height=42,
                                         font=ctk.CTkFont(size=14))
         self.weight_entry.pack(fill="x", padx=25, pady=(0, 15))
         self.weight_entry.bind("<Return>", lambda e: self.calculate())
