@@ -16,6 +16,7 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
+# Theme Setup
 ctk.set_appearance_mode("Light")
 ctk.set_default_color_theme("blue")
 
@@ -23,16 +24,18 @@ class TrackonApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Trackon Rate Calculator")
-        self.geometry("450x750")
+        self.geometry("480x780")
         self.resizable(False, False)
         
         self.colors = {
             "prime": "#E91E63",
             "standard": "#4CAF50",
-            "bg": "#F8F9FA",
+            "bg": "#F0F2F5",
             "card": "#FFFFFF",
-            "text_primary": "#1A1A1A",
-            "text_secondary": "#6C757D"
+            "text_main": "#111827",
+            "text_sub": "#6B7280",
+            "input_bg": "#F3F4F6",
+            "input_border": "#E5E7EB"
         }
         self.company = "prime"
         self.logo_img = None
@@ -42,14 +45,15 @@ class TrackonApp(ctk.CTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         
-        main_scroll = ctk.CTkScrollableFrame(self, fg_color=self.colors["bg"])
+        main_scroll = ctk.CTkScrollableFrame(self, fg_color=self.colors["bg"], scrollbar_button_color="#D1D5DB")
         main_scroll.grid(row=0, column=0, sticky="nsew")
         main_scroll.grid_columnconfigure(0, weight=1)
         
-        header_card = ctk.CTkFrame(main_scroll, fg_color=self.colors["card"], corner_radius=16)
-        header_card.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 15))
+        # --- HEADER ---
+        header_card = ctk.CTkFrame(main_scroll, fg_color=self.colors["card"], corner_radius=20, border_width=0)
+        header_card.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 20))
         
-        logo_frame = ctk.CTkFrame(header_card, fg_color="transparent", height=100)
+        logo_frame = ctk.CTkFrame(header_card, fg_color="transparent", height=110)
         logo_frame.pack(fill="x")
         logo_frame.pack_propagate(False)
         
@@ -58,110 +62,104 @@ class TrackonApp(ctk.CTk):
                 img_path = resource_path("trackon_logo.png")
                 if os.path.exists(img_path):
                     img = Image.open(img_path)
-                    width_percent = (200 / float(img.size[0]))
-                    hsize = int((float(img.size[1]) * float(width_percent)))
-                    img = img.resize((200, hsize), Image.Resampling.LANCZOS)
-                    self.logo_img = ctk.CTkImage(light_image=img, size=(200, hsize))
+                    img = img.resize((220, int(220 * img.size[1] / img.size[0])), Image.Resampling.LANCZOS)
+                    self.logo_img = ctk.CTkImage(light_image=img, size=(220, int(220 * img.size[1] / img.size[0])))
                     logo_label = ctk.CTkLabel(logo_frame, image=self.logo_img, text="")
-                    logo_label.pack(pady=(10, 5))
+                    logo_label.pack(pady=(15, 5))
                 else: raise FileNotFoundError
         except Exception:
-            ctk.CTkLabel(logo_frame, text="TRACKON", 
-                        font=ctk.CTkFont(size=28, weight="bold"), 
-                        text_color=self.colors["text_primary"]).pack(pady=(15, 0))
+            ctk.CTkLabel(logo_frame, text="TRACKON", font=ctk.CTkFont(size=30, weight="bold"), text_color=self.colors["text_main"]).pack(pady=(15, 0))
             
-        ctk.CTkLabel(logo_frame, text="S W I F T  •  S A F E  •  S U R E", 
-                    font=ctk.CTkFont(size=11), 
-                    text_color=self.colors["text_secondary"]).pack(pady=(2, 10))
+        ctk.CTkLabel(logo_frame, text="S W I F T  •  S A F E  •  S U R E", font=ctk.CTkFont(size=12), text_color=self.colors["text_sub"]).pack(pady=(2, 15))
         
-        content_card = ctk.CTkFrame(main_scroll, fg_color=self.colors["card"], corner_radius=16)
+        # --- MAIN FORM CARD ---
+        content_card = ctk.CTkFrame(main_scroll, fg_color=self.colors["card"], corner_radius=20, border_width=0)
         content_card.grid(row=1, column=0, sticky="ew", padx=20, pady=(0, 20))
         
-        ctk.CTkLabel(content_card, text="Select Service", 
-                    font=ctk.CTkFont(size=14, weight="bold"), 
-                    text_color=self.colors["text_primary"], 
-                    anchor="w").pack(fill="x", padx=25, pady=(20, 8))
+        self.add_section_title(content_card, "Select Service")
         
         company_frame = ctk.CTkFrame(content_card, fg_color="transparent")
-        company_frame.pack(fill="x", padx=25, pady=(0, 15))
+        company_frame.pack(fill="x", padx=25, pady=(0, 20))
         company_frame.grid_columnconfigure(0, weight=1)
         company_frame.grid_columnconfigure(1, weight=1)
         
-        self.btn_prime = ctk.CTkButton(company_frame, text="🔴 PRIME", 
-                                      command=lambda: self.select_company("prime"),
-                                      fg_color="#FCE4EC", text_color="#880E4F",
-                                      hover_color="#F8BBD0", corner_radius=10, height=45,
-                                      font=ctk.CTkFont(size=13, weight="bold"))
-        self.btn_prime.grid(row=0, column=0, padx=(0, 8), sticky="ew")
+        self.btn_prime = ctk.CTkButton(company_frame, text="🔴 PRIME", command=lambda: self.select_company("prime"),
+                                      fg_color="#FCE4EC", text_color="#880E4F", hover_color="#F8BBD0", 
+                                      corner_radius=12, height=50, font=ctk.CTkFont(size=14, weight="bold"))
+        self.btn_prime.grid(row=0, column=0, padx=(0, 10), sticky="ew")
         
-        self.btn_standard = ctk.CTkButton(company_frame, text="🟢 STANDARD", 
-                                         command=lambda: self.select_company("standard"),
-                                         fg_color="#E8F5E9", text_color="#1B5E20",
-                                         hover_color="#C8E6C9", corner_radius=10, height=45,
-                                         font=ctk.CTkFont(size=13, weight="bold"))
-        self.btn_standard.grid(row=0, column=1, padx=(8, 0), sticky="ew")
+        self.btn_standard = ctk.CTkButton(company_frame, text="🟢 STANDARD", command=lambda: self.select_company("standard"),
+                                         fg_color="#E8F5E9", text_color="#1B5E20", hover_color="#C8E6C9", 
+                                         corner_radius=12, height=50, font=ctk.CTkFont(size=14, weight="bold"))
+        self.btn_standard.grid(row=0, column=1, padx=(10, 0), sticky="ew")
         self.update_company_buttons()
         
-        ctk.CTkLabel(content_card, text="Service Type", 
-                    font=ctk.CTkFont(size=14, weight="bold"), 
-                    text_color=self.colors["text_primary"], 
-                    anchor="w").pack(fill="x", padx=25, pady=(10, 5))
+        self.add_section_title(content_card, "Shipment Details")
         
+        # Service Type
         self.service_var = ctk.StringVar(value="DOX")
-        service_menu = ctk.CTkOptionMenu(content_card, variable=self.service_var,
-                                        values=["DOX", "Surface (Non-DOX)", "Smart Express"],
-                                        fg_color="#F1F3F4", button_color="#E8EAED",
-                                        button_hover_color="#DEE2E6", corner_radius=10,
-                                        height=42, font=ctk.CTkFont(size=13))
-        service_menu.pack(fill="x", padx=25, pady=(0, 10))
+        self.create_input_row(content_card, "Service Type", is_menu=True, values=["DOX", "Surface (Non-DOX)", "Smart Express"])
         
-        ctk.CTkLabel(content_card, text="Zone", 
-                    font=ctk.CTkFont(size=14, weight="bold"), 
-                    text_color=self.colors["text_primary"], 
-                    anchor="w").pack(fill="x", padx=25, pady=(10, 5))
-        
+        # Zone
         self.zone_var = ctk.StringVar(value="MP")
-        zone_menu = ctk.CTkOptionMenu(content_card, variable=self.zone_var,
-                                     values=["MP", "ROI", "NE"],
-                                     fg_color="#F1F3F4", button_color="#E8EAED",
-                                     button_hover_color="#DEE2E6", corner_radius=10,
-                                     height=42, font=ctk.CTkFont(size=13))
-        zone_menu.pack(fill="x", padx=25, pady=(0, 10))
+        self.create_input_row(content_card, "Zone", is_menu=True, values=["MP", "ROI", "NE"])
         
-        ctk.CTkLabel(content_card, text="Weight (Kg)", 
-                    font=ctk.CTkFont(size=14, weight="bold"), 
-                    text_color=self.colors["text_primary"], 
-                    anchor="w").pack(fill="x", padx=25, pady=(10, 5))
-        
-        self.weight_entry = ctk.CTkEntry(content_card, placeholder_text="Enter weight (e.g., 2.5)",
-                                        fg_color="#F1F3F4", corner_radius=10, height=42,
-                                        font=ctk.CTkFont(size=14))
-        self.weight_entry.pack(fill="x", padx=25, pady=(0, 15))
+        # Weight
+        self.weight_entry = self.create_input_row(content_card, "Weight (Kg)", is_entry=True, placeholder="Enter weight (e.g., 2.5)")
         self.weight_entry.bind("<Return>", lambda e: self.calculate())
         
+        # Button
         self.calc_btn = ctk.CTkButton(content_card, text="CALCULATE RATE 💰",
-                                     command=self.calculate, corner_radius=10, height=50,
-                                     font=ctk.CTkFont(size=15, weight="bold"))
-        self.calc_btn.pack(fill="x", padx=25, pady=(10, 20))
+                                     command=self.calculate, corner_radius=12, height=55,
+                                     font=ctk.CTkFont(size=16, weight="bold"))
+        self.calc_btn.pack(fill="x", padx=25, pady=(10, 25))
         self.update_calc_button()
         
-        self.result_card = ctk.CTkFrame(content_card, fg_color="#F8F9FA", corner_radius=12)
-        self.result_card.pack(fill="x", padx=25, pady=(0, 20))
+        # Result
+        self.result_card = ctk.CTkFrame(content_card, fg_color="#F9FAFB", corner_radius=16, border_width=1, border_color=self.colors["input_border"])
+        self.result_card.pack(fill="x", padx=25, pady=(0, 25))
         
-        ctk.CTkLabel(self.result_card, text="TOTAL AMOUNT", 
-                    font=ctk.CTkFont(size=11), 
-                    text_color=self.colors["text_secondary"]).pack(pady=(12, 0))
+        ctk.CTkLabel(self.result_card, text="TOTAL AMOUNT", font=ctk.CTkFont(size=12, weight="bold"), text_color=self.colors["text_sub"]).pack(pady=(15, 0))
         
-        self.amount_label = ctk.CTkLabel(self.result_card, text="₹0", 
-                                        font=ctk.CTkFont(size=42, weight="bold"),
-                                        text_color=self.colors["prime"])
-        self.amount_label.pack()
+        self.amount_label = ctk.CTkLabel(self.result_card, text="₹0", font=ctk.CTkFont(size=48, weight="bold"), text_color=self.colors["prime"])
+        self.amount_label.pack(pady=(5, 5))
         
-        self.detail_label = ctk.CTkLabel(self.result_card, text="Select options & enter weight", 
-                                        font=ctk.CTkFont(size=12),
-                                        text_color=self.colors["text_secondary"])
-        self.detail_label.pack(pady=(0, 12))
+        self.detail_label = ctk.CTkLabel(self.result_card, text="Select options & enter weight", font=ctk.CTkFont(size=13), text_color=self.colors["text_sub"])
+        self.detail_label.pack(pady=(0, 15))
         
+    def add_section_title(self, parent, text):
+        ctk.CTkLabel(parent, text=text, font=ctk.CTkFont(size=16, weight="bold"), 
+                     text_color=self.colors["text_main"], anchor="w").pack(fill="x", padx=25, pady=(20, 10))
+
+    def create_input_row(self, parent, label_text, is_menu=False, is_entry=False, values=None, placeholder=""):
+        frame = ctk.CTkFrame(parent, fg_color="transparent")
+        frame.pack(fill="x", padx=25, pady=(0, 15))
+        
+        ctk.CTkLabel(frame, text=label_text, font=ctk.CTkFont(size=13, weight="bold"), 
+                     text_color=self.colors["text_main"], anchor="w").pack(fill="x", pady=(0, 8))
+        
+        if is_entry:
+            entry = ctk.CTkEntry(frame, placeholder_text=placeholder,
+                                fg_color=self.colors["input_bg"], border_color=self.colors["input_border"],
+                                border_width=1, corner_radius=12, height=48,
+                                font=ctk.CTkFont(size=14), text_color=self.colors["text_main"],
+                                placeholder_text_color="#9CA3AF")
+            entry.pack(fill="x")
+            return entry
+        else:
+            menu = ctk.CTkOptionMenu(frame, variable=self.service_var if label_text == "Service Type" else self.zone_var,
+                                    values=values,
+                                    fg_color=self.colors["input_bg"], button_color=self.colors["input_bg"],
+                                    button_hover_color="#E5E7EB", corner_radius=12,
+                                    height=48, width=25,
+                                    font=ctk.CTkFont(size=14, weight="bold"),
+                                    text_color=self.colors["text_main"],
+                                    dropdown_text_color=self.colors["text_main"],
+                                    dropdown_fg_color=self.colors["card"],
+                                    dropdown_hover_color=self.colors["input_bg"])
+            menu.pack(fill="x")
+            return menu
+
     def select_company(self, company):
         self.company = company
         self.update_company_buttons()
@@ -199,7 +197,7 @@ class TrackonApp(ctk.CTk):
         zone = self.zone_var.get().lower()
         service = self.service_var.get()
         
-        if "DOX" in service: svc = "dox"
+        if service == "DOX": svc = "dox"
         elif "Surface" in service: svc = "surface"
         else: svc = "smart"
             
@@ -214,24 +212,48 @@ class TrackonApp(ctk.CTk):
                 else:
                     self.show_error("Prime only supports DOX service")
                     
-            else: # Standard Logic
+            else:
+                # ==========================
+                # STANDARD LOGIC (UPDATED)
+                # ==========================
                 if svc == "dox":
-                    base_rates = {"mp": 100, "roi": 260, "ne": 450}
-                    if w <= 1:
-                        amount = base_rates[zone]
-                        detail = "DOX: Flat Rate (0-1kg)"
-                    else:
-                        extra_slabs = math.ceil((w - 1) / 0.5)
-                        addl_rates = {"mp": 80, "roi": 200, "ne": 350}
-                        amount = base_rates[zone] + (extra_slabs * addl_rates[zone])
-                        detail = f"DOX: 1kg + {extra_slabs} addl slab(s)"
+                    if zone == "roi":
+                        if w <= 0.5:
+                            amount = 180
+                            detail = "DOX: 0-500gm Flat"
+                        elif w <= 1.0:
+                            amount = 300
+                            detail = "DOX: Addl 500gm (Total 1kg)"
+                        else:
+                            extra_wt = w - 1.0
+                            extra_slabs = math.ceil(extra_wt / 0.5)
+                            # Base 300 (for 1kg) + 130 per extra 500g slab
+                            amount = 300 + (extra_slabs * 130)
+                            detail = f"DOX: 1kg Base + {extra_slabs} addl slab(s)"
+                            
+                    elif zone == "ne":
+                        if w <= 0.5:
+                            amount = 250
+                            detail = "DOX: 0-500gm Flat"
+                        else:
+                            extra_wt = w - 0.5
+                            extra_slabs = math.ceil(extra_wt / 0.5)
+                            amount = 250 + (extra_slabs * 200)
+                            detail = f"DOX: 500gm Base + {extra_slabs} addl slab(s)"
+                            
+                    elif zone == "mp":
+                        amount = 100
+                        detail = "DOX: MP Flat Rate (0-1kg)"
+
                     self.show_result(amount, detail, self.colors["standard"])
                     
                 elif svc == "surface":
+                    if w < 2:
+                        self.show_error("Surface service sirf 2kg se upar ke liye hai")
+                        return
                     cw = math.ceil(w)
                     rate = 0
                     slab_info = ""
-                    
                     if zone == "mp":
                         if cw <= 5: rate, slab_info = 100, "0-5kg"
                         elif cw <= 10: rate, slab_info = 85, "5-10kg"
@@ -246,20 +268,17 @@ class TrackonApp(ctk.CTk):
                         elif cw <= 7: rate, slab_info = 125, "3-7kg"
                         elif cw <= 10: rate, slab_info = 115, "7-10kg"
                         else: raise ValueError("Weight > 10kg")
-                        
                     amount = rate * cw
                     detail = f"Surface: ₹{rate}/kg ({slab_info}) × {cw}kg"
                     self.show_result(amount, detail, self.colors["standard"])
                     
                 elif svc == "smart":
-                    # ✅ SMART EXPRESS RULES UPDATED
                     if w > 2:
                         self.show_error("Smart Express sirf 2kg tak available hai")
                         return
                     if zone == "mp":
                         self.show_error("Smart Express MP zone mein apply nahi hota")
                         return
-                        
                     cw = math.ceil(w)
                     rates = {"roi": 150, "ne": 200}
                     amount = rates[zone] * cw
