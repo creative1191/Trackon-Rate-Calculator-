@@ -23,7 +23,7 @@ class TrackonApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Trackon Rate Calculator")
-        self.geometry("450x750") # Height badha diya
+        self.geometry("450x750")
         self.resizable(False, False)
         
         self.colors = {
@@ -42,12 +42,10 @@ class TrackonApp(ctk.CTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         
-        # Scrollable Frame (Taaki agar screen choti ho to scroll ho jaye)
         main_scroll = ctk.CTkScrollableFrame(self, fg_color=self.colors["bg"])
         main_scroll.grid(row=0, column=0, sticky="nsew")
         main_scroll.grid_columnconfigure(0, weight=1)
         
-        # Header Card
         header_card = ctk.CTkFrame(main_scroll, fg_color=self.colors["card"], corner_radius=16)
         header_card.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 15))
         
@@ -76,11 +74,9 @@ class TrackonApp(ctk.CTk):
                     font=ctk.CTkFont(size=11), 
                     text_color=self.colors["text_secondary"]).pack(pady=(2, 10))
         
-        # Content Card
         content_card = ctk.CTkFrame(main_scroll, fg_color=self.colors["card"], corner_radius=16)
         content_card.grid(row=1, column=0, sticky="ew", padx=20, pady=(0, 20))
         
-        # Company Selection
         ctk.CTkLabel(content_card, text="Select Service", 
                     font=ctk.CTkFont(size=14, weight="bold"), 
                     text_color=self.colors["text_primary"], 
@@ -106,7 +102,6 @@ class TrackonApp(ctk.CTk):
         self.btn_standard.grid(row=0, column=1, padx=(8, 0), sticky="ew")
         self.update_company_buttons()
         
-        # Service Dropdown
         ctk.CTkLabel(content_card, text="Service Type", 
                     font=ctk.CTkFont(size=14, weight="bold"), 
                     text_color=self.colors["text_primary"], 
@@ -120,7 +115,6 @@ class TrackonApp(ctk.CTk):
                                         height=42, font=ctk.CTkFont(size=13))
         service_menu.pack(fill="x", padx=25, pady=(0, 10))
         
-        # Zone Dropdown
         ctk.CTkLabel(content_card, text="Zone", 
                     font=ctk.CTkFont(size=14, weight="bold"), 
                     text_color=self.colors["text_primary"], 
@@ -134,7 +128,6 @@ class TrackonApp(ctk.CTk):
                                      height=42, font=ctk.CTkFont(size=13))
         zone_menu.pack(fill="x", padx=25, pady=(0, 10))
         
-        # Weight Input
         ctk.CTkLabel(content_card, text="Weight (Kg)", 
                     font=ctk.CTkFont(size=14, weight="bold"), 
                     text_color=self.colors["text_primary"], 
@@ -146,14 +139,12 @@ class TrackonApp(ctk.CTk):
         self.weight_entry.pack(fill="x", padx=25, pady=(0, 15))
         self.weight_entry.bind("<Return>", lambda e: self.calculate())
         
-        # Calculate Button
         self.calc_btn = ctk.CTkButton(content_card, text="CALCULATE RATE 💰",
                                      command=self.calculate, corner_radius=10, height=50,
                                      font=ctk.CTkFont(size=15, weight="bold"))
         self.calc_btn.pack(fill="x", padx=25, pady=(10, 20))
         self.update_calc_button()
         
-        # Result Card
         self.result_card = ctk.CTkFrame(content_card, fg_color="#F8F9FA", corner_radius=12)
         self.result_card.pack(fill="x", padx=25, pady=(0, 20))
         
@@ -223,7 +214,7 @@ class TrackonApp(ctk.CTk):
                 else:
                     self.show_error("Prime only supports DOX service")
                     
-            else:
+            else: # Standard Logic
                 if svc == "dox":
                     base_rates = {"mp": 100, "roi": 260, "ne": 450}
                     if w <= 1:
@@ -240,6 +231,7 @@ class TrackonApp(ctk.CTk):
                     cw = math.ceil(w)
                     rate = 0
                     slab_info = ""
+                    
                     if zone == "mp":
                         if cw <= 5: rate, slab_info = 100, "0-5kg"
                         elif cw <= 10: rate, slab_info = 85, "5-10kg"
@@ -254,16 +246,26 @@ class TrackonApp(ctk.CTk):
                         elif cw <= 7: rate, slab_info = 125, "3-7kg"
                         elif cw <= 10: rate, slab_info = 115, "7-10kg"
                         else: raise ValueError("Weight > 10kg")
+                        
                     amount = rate * cw
                     detail = f"Surface: ₹{rate}/kg ({slab_info}) × {cw}kg"
                     self.show_result(amount, detail, self.colors["standard"])
                     
                 elif svc == "smart":
+                    # ✅ SMART EXPRESS RULES UPDATED
+                    if w > 2:
+                        self.show_error("Smart Express sirf 2kg tak available hai")
+                        return
+                    if zone == "mp":
+                        self.show_error("Smart Express MP zone mein apply nahi hota")
+                        return
+                        
                     cw = math.ceil(w)
-                    rates = {"mp": 81, "roi": 104, "ne": 126}
+                    rates = {"roi": 150, "ne": 200}
                     amount = rates[zone] * cw
                     detail = f"Smart: ₹{rates[zone]}/kg × {cw}kg"
                     self.show_result(amount, detail, self.colors["standard"])
+                    
         except ValueError as e:
             self.show_error(str(e))
             
