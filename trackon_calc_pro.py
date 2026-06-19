@@ -23,20 +23,11 @@ class TrackonApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Trackon Rate Calculator")
-        # ✅ Window size fixed to fit content without scroll
-        self.geometry("480x650") 
+        self.geometry("480x650")
         self.resizable(False, False)
         
-        # ✅ App Icon Fix: Set window icon immediately
-        try:
-            icon_path = resource_path("icon.ico")
-            if os.path.exists(icon_path):
-                self.iconbitmap(icon_path)
-            else:
-                # Fallback for development
-                self.iconbitmap("icon.ico") 
-        except Exception:
-            pass
+        # ✅ FIX: Load Icon after window is initialized
+        self.after(100, self.load_icon)
         
         self.colors = {
             "prime": "#E91E63",
@@ -51,9 +42,17 @@ class TrackonApp(ctk.CTk):
         self.company = "prime"
         self.logo_img = None
         self.setup_ui()
+
+    def load_icon(self):
+        try:
+            icon_path = resource_path("icon.ico")
+            if os.path.exists(icon_path):
+                self.iconbitmap(icon_path)
+                print("Icon loaded successfully.")
+        except Exception as e:
+            print(f"Icon load error: {e}")
         
     def setup_ui(self):
-        # Main Frame (No Scroll)
         main_frame = ctk.CTkFrame(self, fg_color=self.colors["bg"])
         main_frame.pack(fill="both", expand=True, padx=0, pady=0)
         main_frame.grid_columnconfigure(0, weight=1)
@@ -71,7 +70,6 @@ class TrackonApp(ctk.CTk):
                 img_path = resource_path("trackon_logo.png")
                 if os.path.exists(img_path):
                     img = Image.open(img_path)
-                    # Resize logic for clear logo
                     width_percent = (220 / float(img.size[0]))
                     hsize = int((float(img.size[1]) * float(width_percent)))
                     img = img.resize((220, hsize), Image.Resampling.LANCZOS)
@@ -84,11 +82,10 @@ class TrackonApp(ctk.CTk):
             
         ctk.CTkLabel(logo_frame, text="S W I F T  •  S A F E  •  S U R E", font=ctk.CTkFont(size=9), text_color=self.colors["text_sub"]).pack(pady=(2, 5))
         
-        # Content Card
+        # Content
         content_card = ctk.CTkFrame(main_frame, fg_color=self.colors["card"], corner_radius=0, border_width=0)
         content_card.grid(row=1, column=0, sticky="ew")
         
-        # Service Selection
         self.add_section_title(content_card, "Select Service")
         
         company_frame = ctk.CTkFrame(content_card, fg_color="transparent")
@@ -107,29 +104,23 @@ class TrackonApp(ctk.CTk):
         self.btn_standard.grid(row=0, column=1, padx=(8, 0), sticky="ew")
         self.update_company_buttons()
         
-        # Details
         self.add_section_title(content_card, "Shipment Details")
         
-        # Service Type
         self.service_var = ctk.StringVar(value="DOX")
         self.create_input_row(content_card, "Service Type", is_menu=True, values=["DOX", "Surface (Non-DOX)", "Smart Express"])
         
-        # Zone
         self.zone_var = ctk.StringVar(value="MP")
         self.create_input_row(content_card, "Zone", is_menu=True, values=["MP", "ROI", "NE"])
         
-        # Weight
         self.weight_entry = self.create_input_row(content_card, "Weight (Kg)", is_entry=True, placeholder="Enter weight")
         self.weight_entry.bind("<Return>", lambda e: self.calculate())
         
-        # Button
         self.calc_btn = ctk.CTkButton(content_card, text="CALCULATE RATE 💰",
                                      command=self.calculate, corner_radius=10, height=45,
                                      font=ctk.CTkFont(size=14, weight="bold"))
         self.calc_btn.pack(fill="x", padx=20, pady=(5, 15))
         self.update_calc_button()
         
-        # Result (Compact)
         self.result_card = ctk.CTkFrame(content_card, fg_color="#F9FAFB", corner_radius=12, border_width=1, border_color=self.colors["input_border"])
         self.result_card.pack(fill="x", padx=20, pady=(0, 15))
         
