@@ -23,36 +23,38 @@ jobs:
           python -m pip install --upgrade pip
           pip install customtkinter Pillow pyinstaller
 
-      - name: Generate Perfect Icon
+      - name: Generate Icon (icon.ico)
         run: |
-          # Logic: Agar icon_source.png hai toh wo use karo, nahi toh logo crop karo
           python -c "
           from PIL import Image
           import os
           try:
+              # Priority 1: Use icon_source.png if it exists
               if os.path.exists('icon_source.png'):
-                  print('Found square icon_source.png! Using it.')
                   img = Image.open('icon_source.png')
                   img.save('icon.ico')
-              else:
-                  print('No square icon found. Cropping main logo center...')
+                  print('Created icon.ico from icon_source.png')
+              # Priority 2: Crop center from main logo
+              elif os.path.exists('trackon_logo.png'):
                   img = Image.open('trackon_logo.png')
                   w, h = img.size
                   side = min(w, h)
                   left = (w - side) // 2
                   top = (h - side) // 2
-                  icon_img = img.crop((left, top, left + side, top + side))
-                  icon_img = icon_img.resize((256, 256), Image.Resampling.LANCZOS)
-                  icon_img.save('icon.ico')
+                  crop = img.crop((left, top, left + side, top + side))
+                  crop = crop.resize((256, 256), Image.Resampling.LANCZOS)
+                  crop.save('icon.ico')
+                  print('Created icon.ico from trackon_logo.png')
           except Exception as e:
               print(f'Error: {e}')
           "
 
-      - name: Build EXE with PyInstaller
+      - name: Build EXE
         run: |
-          pyinstaller --onefile --windowed --icon="icon.ico" --add-data "trackon_logo.png;." --name "Trackon_Calculator" trackon_calc_pro.py
+          # --add-data ensures icon.ico is available inside the running app
+          pyinstaller --onefile --windowed --icon="icon.ico" --add-data "trackon_logo.png;." --add-data "icon.ico;." --name "Trackon_Calculator" trackon_calc_pro.py
 
-      - name: Upload EXE Artifact
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Trackon_Calculator
